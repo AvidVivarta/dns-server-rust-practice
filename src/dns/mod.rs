@@ -1,19 +1,5 @@
-#[derive(Debug, Default)]
-pub struct DnsHeader {
-    pub id: u16,              // 16bits packet identifier
-    pub qr: bool,             // 1bit query response
-    pub op_code: u16,         // 4bits operation code
-    pub aa: bool,             // 1bit authoritative answer
-    pub tc: bool,             // 1bit truncated message
-    pub rd: bool,             // 1bit recursion desired
-    pub ra: bool,             // 1bit recursion available
-    pub z: bool,              // 3bits reserved for future use must be 0 in all case
-    pub r_code: ResponseCode, // 4bits response code
-    pub qd_count: u16,        // 16bits question count
-    pub an_count: u16,        // 16bits answer count
-    pub ns_count: u16,        // 16bits authority count
-    pub ar_count: u16,        // 16bits additional count
-}
+use std::net::Ipv4Addr;
+mod parser;
 
 #[derive(Debug)]
 pub enum ResponseCode {
@@ -33,13 +19,6 @@ impl Default for ResponseCode {
 }
 
 #[derive(Debug, Default)]
-pub struct DnsQuestion {
-    pub label: String,     // label sequence
-    pub q_type: QueryType, // 2byte record type
-    pub q_class: DnsClass, // 2byte class always set to 1
-}
-
-#[derive(Debug, Default)]
 pub struct DnsRecord {
     pub label: String,      // label sequence
     pub r_type: QueryType,  // 2bytes record type
@@ -51,12 +30,13 @@ pub struct DnsRecord {
 
 #[derive(Debug)]
 pub enum RecordData {
-    IPADDR,
+    IPADDR(Ipv4Addr),
+    UNKNOWN
 }
 
 impl Default for RecordData {
     fn default() -> Self {
-        Self::IPADDR
+        Self::UNKNOWN
     }
 }
 
@@ -87,6 +67,34 @@ impl Default for DnsClass {
 }
 
 #[derive(Debug, Default)]
+pub struct DnsQuestion {
+    pub label: String,     // label sequence
+    pub q_type: QueryType, // 2byte record type
+    pub q_class: DnsClass, // 2byte class always set to 1
+}
+
+impl DnsQuestion{}
+
+#[derive(Debug, Default)]
+pub struct DnsHeader {
+    pub id: u16,              // 16bits packet identifier
+    pub qr: bool,             // 1bit query response
+    pub op_code: u16,         // 4bits operation code
+    pub aa: bool,             // 1bit authoritative answer
+    pub tc: bool,             // 1bit truncated message
+    pub rd: bool,             // 1bit recursion desired
+    pub ra: bool,             // 1bit recursion available
+    pub z: bool,              // 3bits reserved for future use must be 0 in all case
+    pub r_code: ResponseCode, // 4bits response code
+    pub qd_count: u16,        // 16bits question count
+    pub an_count: u16,        // 16bits answer count
+    pub ns_count: u16,        // 16bits authority count
+    pub ar_count: u16,        // 16bits additional count
+}
+
+impl DnsHeader {}
+
+#[derive(Debug, Default)]
 pub struct DnsPacket {
     pub header: DnsHeader,
     pub question: Vec<DnsQuestion>,
@@ -95,5 +103,4 @@ pub struct DnsPacket {
     pub additional: Vec<DnsRecord>,
 }
 
-
-
+impl DnsPacket {}
