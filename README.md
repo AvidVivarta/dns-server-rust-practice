@@ -29,4 +29,11 @@
 | ANCOUNT  | Answer Count         | 16 bits            | The number of entries in the Answer Section                                                                                                                                         |
 | NSCOUNT  | Authority Count      | 16 bits            | The number of entries in the Authority Section                                                                                                                                      |
 | ARCOUNT  | Additional Count     | 16 bits            | The number of entries in the Additional Section                                                                                                                                     |
+* Structure for Question: 
 
+| Field  | Type           | Description                                                          |
+| ------ | -------------- | -------------------------------------------------------------------- |
+| Name   | Label Sequence | The domain name, encoded as a sequence of labels as described below. |
+| Type   | 2-byte Integer | The record type.                                                     |
+| Class  | 2-byte Integer | The class, in practice always set to 1.                              |
+* 
