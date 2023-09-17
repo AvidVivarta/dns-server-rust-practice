@@ -31,7 +31,7 @@ pub struct DnsRecord {
 #[derive(Debug)]
 pub enum RecordData {
     IPADDR(Ipv4Addr),
-    UNKNOWN
+    UNKNOWN,
 }
 
 impl Default for RecordData {
@@ -73,7 +73,7 @@ pub struct DnsQuestion {
     pub q_class: DnsClass, // 2byte class always set to 1
 }
 
-impl DnsQuestion{}
+impl DnsQuestion {}
 
 #[derive(Debug, Default)]
 pub struct DnsHeader {
