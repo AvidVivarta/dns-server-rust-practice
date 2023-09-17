@@ -19,16 +19,27 @@ pub struct DnsHeader {
 pub struct DnsQuestion {
     label: String,            // label sequence
     question_type: QueryType, // 2byte record type
-    question_class: u16,      // 2byte class always set to 1
+    question_class: DnsClass,      // 2byte class always set to 1
 }
 
 #[derive(Debug, Default)]
 pub struct DnsRecord {
     label: String,          // label sequence
     record_type: QueryType, // 2bytes record type
-    record_class: u16,      // 2bytes record class always set to 1
+    record_class: DnsClass,      // 2bytes record class always set to 1
     ttl: u32,               // 4bytes Time-to-Live
-    len: u16,               // 2bytes length of record type specific data
+    rlen: u16,              // 2bytes length of record type specific data
+    rdata: RecordData,      // record data
+}
+
+#[derive(Debug)]
+pub enum RecordData {
+    ipaddr,
+}
+impl Default for RecordData {
+    fn default () -> Self {
+        Self::ipaddr
+    }
 }
 
 #[derive(Debug)]
@@ -38,8 +49,21 @@ pub enum QueryType {
 }
 
 impl Default for QueryType {
-    fn default() -> QueryType {
-        QueryType::A
+    fn default() -> Self{
+        Self::A
+    }
+}
+
+#[derive(Debug)]
+pub enum DnsClass { 
+    IN = 1, 
+    CS = 2, 
+    CH = 3, 
+    HS = 4
+}
+impl Default for DnsClass {
+    fn default() -> Self { 
+        Self::IN
     }
 }
 
