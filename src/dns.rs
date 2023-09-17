@@ -78,6 +78,7 @@ pub enum DnsClass {
     CH = 3,
     HS = 4,
 }
+
 impl Default for DnsClass {
     fn default() -> Self {
         Self::IN
