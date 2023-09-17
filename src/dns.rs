@@ -1,18 +1,18 @@
 #[derive(Debug, Default)]
 pub struct DnsHeader {
-    pub id: u16,       // 16bits packet identifier
-    pub qr: bool,      // 1bit query response
-    pub op_code: u16,  // 4bits operation code
-    pub aa: bool,      // 1bit authoritative answer
-    pub tc: bool,      // 1bit truncated message
-    pub rd: bool,      // 1bit recursion desired
-    pub ra: bool,      // 1bit recursion available
-    pub z: bool,       // 3bits reserved for future use must be 0 in all case
-    pub r_code: ResponseCode,   // 4bits response code
-    pub qd_count: u16, // 16bits question count
-    pub an_count: u16, // 16bits answer count
-    pub ns_count: u16, // 16bits authority count
-    pub ar_count: u16, // 16bits additional count
+    pub id: u16,              // 16bits packet identifier
+    pub qr: bool,             // 1bit query response
+    pub op_code: u16,         // 4bits operation code
+    pub aa: bool,             // 1bit authoritative answer
+    pub tc: bool,             // 1bit truncated message
+    pub rd: bool,             // 1bit recursion desired
+    pub ra: bool,             // 1bit recursion available
+    pub z: bool,              // 3bits reserved for future use must be 0 in all case
+    pub r_code: ResponseCode, // 4bits response code
+    pub qd_count: u16,        // 16bits question count
+    pub an_count: u16,        // 16bits answer count
+    pub ns_count: u16,        // 16bits authority count
+    pub ar_count: u16,        // 16bits additional count
 }
 
 #[derive(Debug)]
@@ -53,6 +53,7 @@ pub struct DnsRecord {
 pub enum RecordData {
     IPADDR,
 }
+
 impl Default for RecordData {
     fn default() -> Self {
         Self::IPADDR
@@ -93,3 +94,6 @@ pub struct DnsPacket {
     pub authority: Vec<DnsRecord>,
     pub additional: Vec<DnsRecord>,
 }
+
+
+
