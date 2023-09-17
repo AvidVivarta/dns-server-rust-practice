@@ -8,7 +8,7 @@ pub struct DnsHeader {
     pub rd: bool,      // 1bit recursion desired
     pub ra: bool,      // 1bit recursion available
     pub z: bool,       // 3bits reserved for future use must be 0 in all case
-    pub r_code: u16,   // 4bits response code
+    pub r_code: ResponseCode,   // 4bits response code
     pub qd_count: u16, // 16bits question count
     pub an_count: u16, // 16bits answer count
     pub ns_count: u16, // 16bits authority count
