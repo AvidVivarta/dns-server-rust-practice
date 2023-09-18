@@ -1,5 +1,6 @@
+use super::parser::DnsBytePacketBuffer;
+use anyhow::Result;
 use std::net::Ipv4Addr;
-mod parser;
 
 #[derive(Debug)]
 pub enum ResponseCode {
@@ -92,7 +93,13 @@ pub struct DnsHeader {
     pub ar_count: u16,        // 16bits additional count
 }
 
-impl DnsHeader {}
+impl DnsHeader {
+    fn read(dbuf: &mut DnsBytePacketBuffer) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut header: DnsHeader = DnsHeader::default();
+        header.id = dbuf.read_u16()?;
+        Ok(header)
+    }
+}
 
 #[derive(Debug, Default)]
 pub struct DnsPacket {
@@ -103,4 +110,12 @@ pub struct DnsPacket {
     pub additional: Vec<DnsRecord>,
 }
 
-impl DnsPacket {}
+impl DnsPacket {
+    pub fn new(file_name: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut dbuf: DnsBytePacketBuffer = DnsBytePacketBuffer::load(file_name)?;
+        let header: DnsHeader = DnsHeader::read(&mut dbuf)?;
+        let packet: DnsPacket = Self::default();
+        let packet = DnsPacket { header, ..packet };
+        Ok(packet)
+    }
+}
