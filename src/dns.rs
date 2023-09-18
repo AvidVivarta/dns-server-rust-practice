@@ -13,6 +13,20 @@ pub enum ResponseCode {
     FUTURE,
 }
 
+impl ResponseCode {
+    fn get_r_code(n: u8)-> ResponseCode{ 
+        match n {
+            1 => ResponseCode::FORMATERROR,
+            2 => ResponseCode::SERVERFAILURE,
+            3 => ResponseCode::NAMEERROR,
+            4 => ResponseCode::NOTIMPLEMENTED,
+            5 => ResponseCode::REFUSED,
+            6..=15 => ResponseCode::FUTURE,
+            0 | _ => ResponseCode::NOERROR, 
+        }
+    }
+}
+
 impl Default for ResponseCode {
     fn default() -> Self {
         Self::NOERROR
@@ -80,7 +94,7 @@ impl DnsQuestion {}
 pub struct DnsHeader {
     pub id: u16,              // 16bits packet identifier
     pub qr: bool,             // 1bit query response
-    pub op_code: u16,         // 4bits operation code
+    pub op_code: u8,         // 4bits operation code
     pub aa: bool,             // 1bit authoritative answer
     pub tc: bool,             // 1bit truncated message
     pub rd: bool,             // 1bit recursion desired
@@ -97,8 +111,23 @@ impl DnsHeader {
     fn read(dbuf: &mut DnsBytePacketBuffer) -> Result<Self, Box<dyn std::error::Error>> {
         let mut header: DnsHeader = DnsHeader::default();
         header.id = dbuf.read_u16()?;
+        let a: u8 = dbuf.read()?;
+        let b: u8 = dbuf.read()?;
+        header.qr= (a >> 7) > 0;
+        header.op_code = (a >> 3) & 0x0F;
+        header.aa = ((a >> 2) & 1) > 0; 
+        header.tc = ((a >> 1) & 1) > 0; 
+        header.rd = (a & 1) > 0;
+        header.ra = (b >> 7) > 0;
+        header.z = false; 
+        header.r_code = ResponseCode::get_r_code(b & 0x0F);
+        header.qd_count = dbuf.read_u16()?; 
+        header.an_count = dbuf.read_u16()?; 
+        header.ns_count = dbuf.read_u16()?; 
+        header.ar_count = dbuf.read_u16()?; 
         Ok(header)
     }
+
 }
 
 #[derive(Debug, Default)]
