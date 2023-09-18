@@ -1,5 +1,9 @@
 # [DNS Server in Rust](https://github.com/EmilHernvall/dnsguide/blob/master/README.md)
 
+## Reference: 
+* [RFC1035](https://datatracker.ietf.org/doc/html/rfc1035)
+
+## Introduction
 - DNS packets are sent using UDP transpot and are limited to 512 bytes.
 - But can be used over TCP and using eDNS we can extend the packet size.
 - Queries and response use the same format
