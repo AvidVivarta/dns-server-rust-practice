@@ -85,7 +85,7 @@ impl DnsBytePacketBuffer {
         }
     }
     // read the label
-    pub fn read_label(&mut self) -> Option<String> {
+    pub fn read_label(&mut self) -> Result<String> {
         todo!()
     }
 }

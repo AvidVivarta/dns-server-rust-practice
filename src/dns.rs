@@ -13,16 +13,16 @@ pub enum ResponseCode {
     FUTURE,
 }
 
-impl ResponseCode {
-    fn get_r_code(n: u8) -> ResponseCode {
+impl From<u8> for ResponseCode {
+    fn from(n: u8) -> Self{
         match n {
-            1 => ResponseCode::FORMATERROR,
-            2 => ResponseCode::SERVERFAILURE,
-            3 => ResponseCode::NAMEERROR,
-            4 => ResponseCode::NOTIMPLEMENTED,
-            5 => ResponseCode::REFUSED,
-            6..=15 => ResponseCode::FUTURE,
-            0 | _ => ResponseCode::NOERROR,
+            1 => Self::FORMATERROR,
+            2 => Self::SERVERFAILURE,
+            3 => Self::NAMEERROR,
+            4 => Self::NOTIMPLEMENTED,
+            5 => Self::REFUSED,
+            6..=15 => Self::FUTURE,
+            0 | _ => Self::NOERROR,
         }
     }
 }
@@ -43,16 +43,44 @@ pub struct DnsRecord {
     pub r_data: RecordData, // record data
 }
 
+impl DnsRecord {
+    fn read(dbuf: &mut DnsBytePacketBuffer, entries: usize) -> Result<Vec<DnsRecord>> {
+        let mut records: Vec<DnsRecord> = Vec::new();
+        for _ in 1..=entries {
+            let query:String = dbuf.read_label()?; 
+            let r_type: QueryType = dbuf.read_u16()?.into();
+            let r_class: DnsClass = dbuf.read_u16()?.into();
+            let ttl: u32 = dbuf.read_u32()?;
+            let rd_len: u16 = dbuf.read_u16()?;
+            let r_data: RecordData = RecordData::from(&r_type, &mut *dbuf)?;
+            records.push( DnsRecord{label:query, r_type,r_class, ttl, rd_len, r_data});
+        }
+        Ok(records)
+    }
+}
+
 #[derive(Debug)]
 pub enum RecordData {
     IPADDR(Ipv4Addr),
-    UNKNOWN,
+    UNKNOWN(u16),
 }
 
 impl Default for RecordData {
     fn default() -> Self {
-        Self::UNKNOWN
+        Self::UNKNOWN(0u16)
     }
+}
+
+impl RecordData {
+    fn from(r_type: &QueryType, dbuf: &mut DnsBytePacketBuffer) -> Result<Self>{
+        match *r_type {
+            QueryType::A => {
+                let ip_addr: Ipv4Addr = Ipv4Addr::new(dbuf.read()?, dbuf.read()?, dbuf.read()?, dbuf.read()?);
+                Ok(Self::IPADDR(ip_addr))
+            }, 
+            QueryType::UNKNOWN(x) => Ok(Self::UNKNOWN(x))
+        }
+    } 
 }
 
 #[derive(Debug)]
@@ -66,6 +94,16 @@ impl Default for QueryType {
         Self::A
     }
 }
+
+impl From<u16> for QueryType {
+    fn from(num: u16) -> Self {
+        match num {
+            1 => QueryType::A, 
+            y => QueryType::UNKNOWN(y)
+        }
+    }
+}
+
 
 #[derive(Debug)]
 pub enum DnsClass {
@@ -81,6 +119,19 @@ impl Default for DnsClass {
     }
 }
 
+impl From<u16> for DnsClass {
+    fn from(num: u16) -> Self {
+        match num {
+            1 => Self::IN, 
+            2 => Self::CS, 
+            3 => Self::CH, 
+            4 => Self::HS, 
+            _ => Self::IN, 
+
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct DnsQuestion {
     pub label: String,     // label sequence
@@ -90,14 +141,22 @@ pub struct DnsQuestion {
 
 impl DnsQuestion {
     fn read(dbuf: &mut DnsBytePacketBuffer, entries: usize) -> Result<Vec<DnsQuestion>> {
-        Ok(Vec::new())
+        let mut questions: Vec<DnsQuestion> = Vec::new();
+        for _ in 1..=entries {
+            let query:String = dbuf.read_label()?; 
+            let q_type: QueryType = dbuf.read_u16()?.into();
+            let q_class: DnsClass = dbuf.read_u16()?.into();
+            questions.push( DnsQuestion {label:query, q_type,q_class});
+        }
+        Ok(questions)
     }
+    
 }
 
 #[derive(Debug, Default)]
 pub struct DnsHeader {
     pub id: u16,              // 16bits packet identifier
-    pub qr: bool,             // 1bit query response
+    pub qr: bool,             // 1bit query response (0 if query, 1 if response)
     pub op_code: u8,          // 4bits operation code
     pub aa: bool,             // 1bit authoritative answer
     pub tc: bool,             // 1bit truncated message
@@ -124,7 +183,7 @@ impl DnsHeader {
         header.rd = (a & 1) > 0;
         header.ra = (b >> 7) > 0;
         header.z = false;
-        header.r_code = ResponseCode::get_r_code(b & 0x0F);
+        header.r_code = (b & 0x0F).into();
         header.qd_count = dbuf.read_u16()?;
         header.an_count = dbuf.read_u16()?;
         header.ns_count = dbuf.read_u16()?;
@@ -148,6 +207,9 @@ impl DnsPacket {
         let mut packet: DnsPacket = Self::default();
         packet.header = DnsHeader::read(&mut dbuf)?;
         packet.questions = DnsQuestion::read(&mut dbuf, packet.header.qd_count as usize)?;
+        if packet.header.qr {
+            packet.answers = DnsRecord::read(&mut dbuf, packet.header.an_count as usize)?;
+        }
         Ok(packet)
     }
 }
