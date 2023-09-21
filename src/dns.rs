@@ -207,9 +207,15 @@ impl DnsPacket {
         let mut packet: DnsPacket = Self::default();
         packet.header = DnsHeader::read(&mut dbuf)?;
         packet.questions = DnsQuestion::read(&mut dbuf, packet.header.qd_count as usize)?;
-        if packet.header.qr {
+        if packet.header.qr && packet.header.an_count > 0 {
             packet.answers = DnsRecord::read(&mut dbuf, packet.header.an_count as usize)?;
         }
-        Ok(packet)
+         if packet.header.ns_count > 0{
+            packet.answers = DnsRecord::read(&mut dbuf, packet.header.ns_count as usize)?;
+        }
+          if packet.header.ar_count > 0{
+            packet.answers = DnsRecord::read(&mut dbuf, packet.header.ar_count as usize)?;
+        }
+       Ok(packet)
     }
 }

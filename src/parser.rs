@@ -22,10 +22,7 @@ impl DnsBytePacketBuffer {
         })
     }
 
-    pub fn pos(&self) -> usize {
-        self.pos
-    }
-    // get byte and change position
+   // get byte and change position
     pub fn read(&mut self) -> Result<u8> {
         match self.pos < self.bytes_read {
             true => {
@@ -86,7 +83,7 @@ impl DnsBytePacketBuffer {
     }
     // read the label
     pub fn read_label(&mut self) -> Result<String> {
-        todo!()
+        Ok(String::from("to be implemented"))// TODO: implement this code
     }
 }
 
