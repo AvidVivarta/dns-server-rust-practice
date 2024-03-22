@@ -1,14 +1,20 @@
+use std::env;
 use std::net::UdpSocket;
 
-use dns_server::{
+use lib::{
     dns::{DnsPacket, DnsQuestion, QueryType},
     parser::DnsBytePacketBuffer,
     Result,
 };
 
 fn main() -> Result<()> {
+    let mut args = env::args();
+    args.next();
     // Perform an A query for google.com
-    let query_name: &str = "google.com";
+    let query_name: String = match args.next() {
+        Some(name) => name,
+        None => String::from("google.com"),
+    };
     let query_type: QueryType = QueryType::A;
     // Using googles public DNS server
     let server: (&str, u16) = ("8.8.8.8", 53);
@@ -21,7 +27,7 @@ fn main() -> Result<()> {
     packet.header.rd = true;
     packet
         .questions
-        .push(DnsQuestion::new(query_name.to_string(), query_type));
+        .push(DnsQuestion::new(query_name, query_type));
 
     // Use our new write method to write the packet to a buffer...
     let mut req_buffer = DnsBytePacketBuffer::new();

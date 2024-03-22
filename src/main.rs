@@ -1,4 +1,4 @@
-use dns_server::Result;
+use lib::Result;
 
 fn main() -> Result<()> {
     println!("Hello DNS!!");

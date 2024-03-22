@@ -2,6 +2,7 @@
 
 ## Reference: 
 * [RFC1035](https://datatracker.ietf.org/doc/html/rfc1035)
+* [Cargo.toml targets config](https://doc.rust-lang.org/cargo/reference/cargo-targets.html)
 
 ## Introduction
 - DNS packets are sent using UDP transpot and are limited to 512 bytes.
