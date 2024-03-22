@@ -1,3 +1,4 @@
 /target
 /src/**/C*
 /src/C*
+C*nvim*

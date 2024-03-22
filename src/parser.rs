@@ -1,6 +1,7 @@
 use super::Result;
 use std::fs::File;
 use std::io::{BufReader, Read};
+use std::ops::Range;
 
 #[derive(Debug)]
 pub struct DnsBytePacketBuffer {
@@ -10,6 +11,18 @@ pub struct DnsBytePacketBuffer {
 }
 
 impl DnsBytePacketBuffer {
+    pub fn new() -> Self {
+        Self {
+            buf: [0; 512],
+            pos: 0,
+            bytes_read: 0,
+        }
+    }
+
+    pub fn set_bytes_read(&mut self, bytes_read: usize) {
+        self.bytes_read = bytes_read;
+    }
+
     pub fn load(file_name: &str) -> Result<Self> {
         let file: File = File::open(file_name).expect("Unable to find the file");
         let mut reader: BufReader<File> = BufReader::new(file);
@@ -22,7 +35,11 @@ impl DnsBytePacketBuffer {
         })
     }
 
-    fn get_pos(&self) -> usize {
+    pub fn get_buf(&mut self) -> &mut [u8] {
+        &mut self.buf[..]
+    }
+
+    pub fn get_pos(&self) -> usize {
         self.pos
     }
 
@@ -107,6 +124,11 @@ impl DnsBytePacketBuffer {
     }
 
     /// get range of bytes without updating the pos
+    pub fn get_buf_range(&self, range: Range<usize>) -> Result<&[u8]> {
+        Ok(&self.buf[range])
+    }
+
+    /// get range of bytes without updating the pos
     pub fn get_range(&self, start: usize, len: usize) -> Result<&[u8]> {
         match start > 0 && start + len < self.bytes_read {
             true => Ok(&self.buf[start..start + len]),
@@ -158,6 +180,58 @@ impl DnsBytePacketBuffer {
             self.seek(pos)?;
         }
         Ok(output)
+    }
+
+    /// write operation
+    fn write(&mut self, val: u8) -> Result<()> {
+        if self.pos >= 512 {
+            eprintln!("End of buffer");
+            return Err(());
+        }
+        self.buf[self.pos] = val;
+        self.pos += 1;
+        Ok(())
+    }
+
+    /// write unsigned 8bit
+    pub fn write_u8(&mut self, val: u8) -> Result<()> {
+        self.write(val)?;
+        Ok(())
+    }
+
+    /// write unsigned 16bit
+    pub fn write_u16(&mut self, val: u16) -> Result<()> {
+        self.write((val >> 8) as u8)?;
+        self.write((val & 0xFF) as u8)?;
+        Ok(())
+    }
+
+    /// write unsigned 32bit
+    pub fn write_u32(&mut self, val: u32) -> Result<()> {
+        self.write(((val >> 24) & 0xFF) as u8)?;
+        self.write(((val >> 16) & 0xFF) as u8)?;
+        self.write(((val >> 8) & 0xFF) as u8)?;
+        self.write(((val >> 0) & 0xFF) as u8)?;
+        Ok(())
+    }
+
+    /// write the query name into buffer
+    pub fn write_label(&mut self, qname: &str) -> Result<()> {
+        for label in qname.split('.') {
+            let len = label.len();
+            if len > 0x3f {
+                eprintln!("Single label exceeds 63 characters of length");
+                return Err(());
+            }
+
+            self.write_u8(len as u8)?;
+            for b in label.as_bytes() {
+                self.write_u8(*b)?;
+            }
+        }
+
+        self.write_u8(0)?;
+        Ok(())
     }
 }
 

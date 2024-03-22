@@ -2,7 +2,17 @@
 name = "dns-server"
 version = "0.1.0"
 edition = "2021"
+default-run = "stub_resolver"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name="stub_resolver"
+path="src/bin/stub-resolver.rs"
+
+[[bin]]
+name="file_reader"
+path="src/bin/file-reader.rs"
+
 
 [dependencies]
