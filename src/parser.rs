@@ -1,4 +1,4 @@
-use anyhow::{Context, Error, Result};
+use super::Result;
 use std::fs::File;
 use std::io::{BufReader, Read};
 
@@ -10,11 +10,11 @@ pub struct DnsBytePacketBuffer {
 }
 
 impl DnsBytePacketBuffer {
-    pub fn load(file_name: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        let file: File = File::open(file_name).context("Unable to find the file")?;
+    pub fn load(file_name: &str) -> Result<Self> {
+        let file: File = File::open(file_name).expect("Unable to find the file");
         let mut reader: BufReader<File> = BufReader::new(file);
         let mut buf: [u8; 512] = [0u8; 512];
-        let bytes_read: usize = reader.read(&mut buf).context("unable to read from file")?;
+        let bytes_read: usize = reader.read(&mut buf).expect("Unable to read from file");
         Ok(DnsBytePacketBuffer {
             buf,
             bytes_read,
@@ -26,7 +26,7 @@ impl DnsBytePacketBuffer {
         self.pos
     }
 
-    // get byte and change position
+    /// get byte and change position
     pub fn read(&mut self) -> Result<u8> {
         match self.pos < self.bytes_read {
             true => {
@@ -34,45 +34,62 @@ impl DnsBytePacketBuffer {
                 self.pos += 1;
                 Ok(data)
             }
-            false => Err(Error::msg("No more bytes to read")),
+            false => {
+                eprintln!("No more bytes to read");
+                Err(())
+            }
         }
     }
-    fn seek(&mut self, pos:usize) -> Result<()>{
+    fn seek(&mut self, pos: usize) -> Result<()> {
         if pos > self.bytes_read {
-            return Err(Error::msg("can't seek more than bytes read"));
+            eprintln!("can't seek more than bytes read");
+            Err(())
+        } else {
+            self.pos = pos;
+            Ok(())
         }
-            self.pos = pos; 
-        Ok(())
     }
 
-    // get u16 and update position
+    /// get u16 and update position
     pub fn read_u16(&mut self) -> Result<u16> {
         match self.pos + 1 < self.bytes_read {
             true => {
                 let data: u16 = ((self.read()? as u16) << 8) | (self.read()? as u16);
                 Ok(data)
             }
-            false => Err(Error::msg("No more u16 to read")),
+            false => {
+                eprintln!("No more u16 to read");
+                Err(())
+            }
         }
     }
-    // get byte at pos without changing position
+
+    /// get byte at pos without changing position
     pub fn get(&self, index: usize) -> Result<u8> {
         match index < self.bytes_read {
             true => Ok(self.buf[index]),
-            false => Err(Error::msg(format!("Can't read at index: {}", index))),
+            false => {
+                eprintln!("Can't read at index: {}", index);
+                Err(())
+            }
         }
     }
-    // step usize position forward
-    pub fn step(&mut self, steps: usize) -> Result<()> {
+
+    /// step usize position forward
+    pub fn _step(&mut self, steps: usize) -> Result<()> {
         match self.pos + steps <= self.bytes_read {
             true => {
                 self.pos += steps;
                 Ok(())
             }
-            false => Err(Error::msg(format!("Can't step for: {}", steps))),
+            false => {
+                eprintln!("Can't step for: {}", steps);
+                Err(())
+            }
         }
     }
-    // read 4 bytes
+
+    /// read 4 bytes
     pub fn read_u32(&mut self) -> Result<u32> {
         match self.pos + 3 < self.bytes_read {
             true => {
@@ -82,17 +99,24 @@ impl DnsBytePacketBuffer {
                     | (self.read()? as u32);
                 Ok(data)
             }
-            false => Err(Error::msg("No more u32 to read")),
+            false => {
+                eprintln!("No more u32 to read");
+                Err(())
+            }
         }
     }
-    // get range of bytes without updating the pos
+
+    /// get range of bytes without updating the pos
     pub fn get_range(&self, start: usize, len: usize) -> Result<&[u8]> {
         match start > 0 && start + len < self.bytes_read {
             true => Ok(&self.buf[start..start + len]),
-            false => Err(Error::msg(format!("Can't get range: {} - {}", start, len))),
+            false => {
+                eprintln!("Can't get range: {} - {}", start, len);
+                Err(())
+            }
         }
     }
-    // read the label
+    /// read the label
     pub fn read_label(&mut self) -> Result<String> {
         let mut pos: usize = self.get_pos();
         let mut jumped: bool = false;
@@ -102,7 +126,8 @@ impl DnsBytePacketBuffer {
         const MAX_JUMPS: usize = 5;
         loop {
             if jumps > MAX_JUMPS {
-                return Err(Error::msg(format!("Limits of jumps exceeded: {}", MAX_JUMPS)));
+                eprintln!("Limits of jumps exceeded: {}", MAX_JUMPS);
+                return Err(());
             }
             let len: u8 = self.get(pos)?;
             // if it is a redirection byte then
@@ -123,7 +148,7 @@ impl DnsBytePacketBuffer {
                     break;
                 }
                 output.push_str(delim);
-                let str_buffer: &[u8]= self.get_range(pos, len as usize)?;
+                let str_buffer: &[u8] = self.get_range(pos, len as usize)?;
                 output.push_str(&String::from_utf8_lossy(str_buffer).to_lowercase());
                 delim = ".";
                 pos += len as usize;

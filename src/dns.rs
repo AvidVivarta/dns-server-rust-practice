@@ -1,5 +1,5 @@
 use super::parser::DnsBytePacketBuffer;
-use anyhow::Result;
+use super::Result;
 use std::net::Ipv4Addr;
 
 #[derive(Debug)]
@@ -14,7 +14,7 @@ pub enum ResponseCode {
 }
 
 impl From<u8> for ResponseCode {
-    fn from(n: u8) -> Self{
+    fn from(n: u8) -> Self {
         match n {
             1 => Self::FORMATERROR,
             2 => Self::SERVERFAILURE,
@@ -35,25 +35,38 @@ impl Default for ResponseCode {
 
 #[derive(Debug, Default)]
 pub struct DnsRecord {
-    pub label: String,      // label sequence
-    pub r_type: QueryType,  // 2bytes record type
-    pub r_class: DnsClass,  // 2bytes record class always set to 1
-    pub ttl: u32,           // 4bytes Time-to-Live
-    pub rd_len: u16,        // 2bytes length of record type specific data
-    pub r_data: RecordData, // record data
+    /// label sequence
+    pub label: String,      
+    /// 2bytes record type
+    pub r_type: QueryType,  
+    /// 2bytes record class always set to 1
+    pub r_class: DnsClass,  
+    /// 4bytes Time-to-Live
+    pub ttl: u32,           
+    /// 2bytes length of record type specific data
+    pub rd_len: u16,        
+    /// record data
+    pub r_data: RecordData, 
 }
 
 impl DnsRecord {
     fn read(dbuf: &mut DnsBytePacketBuffer, entries: usize) -> Result<Vec<DnsRecord>> {
         let mut records: Vec<DnsRecord> = Vec::new();
         for _ in 1..=entries {
-            let query:String = dbuf.read_label()?; 
+            let query: String = dbuf.read_label()?;
             let r_type: QueryType = dbuf.read_u16()?.into();
             let r_class: DnsClass = dbuf.read_u16()?.into();
             let ttl: u32 = dbuf.read_u32()?;
             let rd_len: u16 = dbuf.read_u16()?;
             let r_data: RecordData = RecordData::from(&r_type, &mut *dbuf)?;
-            records.push( DnsRecord{label:query, r_type,r_class, ttl, rd_len, r_data});
+            records.push(DnsRecord {
+                label: query,
+                r_type,
+                r_class,
+                ttl,
+                rd_len,
+                r_data,
+            });
         }
         Ok(records)
     }
@@ -72,15 +85,16 @@ impl Default for RecordData {
 }
 
 impl RecordData {
-    fn from(r_type: &QueryType, dbuf: &mut DnsBytePacketBuffer) -> Result<Self>{
+    fn from(r_type: &QueryType, dbuf: &mut DnsBytePacketBuffer) -> Result<Self> {
         match *r_type {
             QueryType::A => {
-                let ip_addr: Ipv4Addr = Ipv4Addr::new(dbuf.read()?, dbuf.read()?, dbuf.read()?, dbuf.read()?);
+                let ip_addr: Ipv4Addr =
+                    Ipv4Addr::new(dbuf.read()?, dbuf.read()?, dbuf.read()?, dbuf.read()?);
                 Ok(Self::IPADDR(ip_addr))
-            }, 
-            QueryType::UNKNOWN(x) => Ok(Self::UNKNOWN(x))
+            }
+            QueryType::UNKNOWN(x) => Ok(Self::UNKNOWN(x)),
         }
-    } 
+    }
 }
 
 #[derive(Debug)]
@@ -98,12 +112,11 @@ impl Default for QueryType {
 impl From<u16> for QueryType {
     fn from(num: u16) -> Self {
         match num {
-            1 => QueryType::A, 
-            y => QueryType::UNKNOWN(y)
+            1 => QueryType::A,
+            y => QueryType::UNKNOWN(y),
         }
     }
 }
-
 
 #[derive(Debug)]
 pub enum DnsClass {
@@ -122,56 +135,74 @@ impl Default for DnsClass {
 impl From<u16> for DnsClass {
     fn from(num: u16) -> Self {
         match num {
-            1 => Self::IN, 
-            2 => Self::CS, 
-            3 => Self::CH, 
-            4 => Self::HS, 
-            _ => Self::IN, 
-
+            1 => Self::IN,
+            2 => Self::CS,
+            3 => Self::CH,
+            4 => Self::HS,
+            _ => Self::IN,
         }
     }
 }
 
 #[derive(Debug, Default)]
 pub struct DnsQuestion {
-    pub label: String,     // label sequence
-    pub q_type: QueryType, // 2byte record type
-    pub q_class: DnsClass, // 2byte class always set to 1
+/// label sequence
+    pub label: String,     
+/// 2byte record type
+    pub q_type: QueryType, 
+/// 2byte class always set to 1
+    pub q_class: DnsClass, 
 }
 
 impl DnsQuestion {
     fn read(dbuf: &mut DnsBytePacketBuffer, entries: usize) -> Result<Vec<DnsQuestion>> {
         let mut questions: Vec<DnsQuestion> = Vec::new();
         for _ in 1..=entries {
-            let query:String = dbuf.read_label()?; 
+            let query: String = dbuf.read_label()?;
             let q_type: QueryType = dbuf.read_u16()?.into();
             let q_class: DnsClass = dbuf.read_u16()?.into();
-            questions.push( DnsQuestion {label:query, q_type,q_class});
+            questions.push(DnsQuestion {
+                label: query,
+                q_type,
+                q_class,
+            });
         }
         Ok(questions)
     }
-    
 }
 
 #[derive(Debug, Default)]
 pub struct DnsHeader {
-    pub id: u16,              // 16bits packet identifier
-    pub qr: bool,             // 1bit query response (0 if query, 1 if response)
-    pub op_code: u8,          // 4bits operation code
-    pub aa: bool,             // 1bit authoritative answer
-    pub tc: bool,             // 1bit truncated message
-    pub rd: bool,             // 1bit recursion desired
-    pub ra: bool,             // 1bit recursion available
-    pub z: bool,              // 3bits reserved for future use must be 0 in all case
-    pub r_code: ResponseCode, // 4bits response code
-    pub qd_count: u16,        // 16bits question count
-    pub an_count: u16,        // 16bits answer count
-    pub ns_count: u16,        // 16bits authority count
-    pub ar_count: u16,        // 16bits additional count
+    /// 16bits packet identifier
+    pub id: u16,              
+    /// 1bit query response (0 if query, 1 if response)
+    pub qr: bool,             
+    /// 4bits operation code
+    pub op_code: u8,          
+    /// 1bit authoritative answer
+    pub aa: bool,             
+    /// 1bit truncated message
+    pub tc: bool,             
+    /// 1bit recursion desired
+    pub rd: bool,             
+    /// 1bit recursion available
+    pub ra: bool,             
+    /// 3bits reserved for future use must be 0 in all case
+    pub z: bool,          
+    /// 4bits response code
+    pub r_code: ResponseCode, 
+    /// 16bits question count
+    pub qd_count: u16,        
+    /// 16bits answer count
+    pub an_count: u16,        
+    /// 16bits authority count
+    pub ns_count: u16,        
+    /// 16bits additional count
+    pub ar_count: u16,        
 }
 
 impl DnsHeader {
-    fn read(dbuf: &mut DnsBytePacketBuffer) -> Result<Self, Box<dyn std::error::Error>> {
+    fn read(dbuf: &mut DnsBytePacketBuffer) -> Result<Self> {
         let mut header: DnsHeader = DnsHeader::default();
         header.id = dbuf.read_u16()?;
         let a: u8 = dbuf.read()?;
@@ -202,7 +233,7 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-    pub fn new(file_name: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(file_name: &str) -> Result<Self> {
         let mut dbuf: DnsBytePacketBuffer = DnsBytePacketBuffer::load(file_name)?;
         let mut packet: DnsPacket = Self::default();
         packet.header = DnsHeader::read(&mut dbuf)?;
@@ -210,12 +241,12 @@ impl DnsPacket {
         if packet.header.qr && packet.header.an_count > 0 {
             packet.answers = DnsRecord::read(&mut dbuf, packet.header.an_count as usize)?;
         }
-         if packet.header.ns_count > 0{
+        if packet.header.ns_count > 0 {
             packet.answers = DnsRecord::read(&mut dbuf, packet.header.ns_count as usize)?;
         }
-          if packet.header.ar_count > 0{
+        if packet.header.ar_count > 0 {
             packet.answers = DnsRecord::read(&mut dbuf, packet.header.ar_count as usize)?;
         }
-       Ok(packet)
+        Ok(packet)
     }
 }
