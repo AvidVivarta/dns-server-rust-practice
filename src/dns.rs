@@ -36,17 +36,17 @@ impl Default for ResponseCode {
 #[derive(Debug, Default)]
 pub struct DnsRecord {
     /// label sequence
-    pub label: String,      
+    pub label: String,
     /// 2bytes record type
-    pub r_type: QueryType,  
+    pub r_type: QueryType,
     /// 2bytes record class always set to 1
-    pub r_class: DnsClass,  
+    pub r_class: DnsClass,
     /// 4bytes Time-to-Live
-    pub ttl: u32,           
+    pub ttl: u32,
     /// 2bytes length of record type specific data
-    pub rd_len: u16,        
+    pub rd_len: u16,
     /// record data
-    pub r_data: RecordData, 
+    pub r_data: RecordData,
 }
 
 impl DnsRecord {
@@ -146,12 +146,12 @@ impl From<u16> for DnsClass {
 
 #[derive(Debug, Default)]
 pub struct DnsQuestion {
-/// label sequence
-    pub label: String,     
-/// 2byte record type
-    pub q_type: QueryType, 
-/// 2byte class always set to 1
-    pub q_class: DnsClass, 
+    /// label sequence
+    pub label: String,
+    /// 2byte record type
+    pub q_type: QueryType,
+    /// 2byte class always set to 1
+    pub q_class: DnsClass,
 }
 
 impl DnsQuestion {
@@ -174,31 +174,31 @@ impl DnsQuestion {
 #[derive(Debug, Default)]
 pub struct DnsHeader {
     /// 16bits packet identifier
-    pub id: u16,              
+    pub id: u16,
     /// 1bit query response (0 if query, 1 if response)
-    pub qr: bool,             
+    pub qr: bool,
     /// 4bits operation code
-    pub op_code: u8,          
+    pub op_code: u8,
     /// 1bit authoritative answer
-    pub aa: bool,             
+    pub aa: bool,
     /// 1bit truncated message
-    pub tc: bool,             
+    pub tc: bool,
     /// 1bit recursion desired
-    pub rd: bool,             
+    pub rd: bool,
     /// 1bit recursion available
-    pub ra: bool,             
+    pub ra: bool,
     /// 3bits reserved for future use must be 0 in all case
-    pub z: bool,          
+    pub z: bool,
     /// 4bits response code
-    pub r_code: ResponseCode, 
+    pub r_code: ResponseCode,
     /// 16bits question count
-    pub qd_count: u16,        
+    pub qd_count: u16,
     /// 16bits answer count
-    pub an_count: u16,        
+    pub an_count: u16,
     /// 16bits authority count
-    pub ns_count: u16,        
+    pub ns_count: u16,
     /// 16bits additional count
-    pub ar_count: u16,        
+    pub ar_count: u16,
 }
 
 impl DnsHeader {
