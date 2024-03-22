@@ -396,7 +396,6 @@ pub struct DnsPacket {
 }
 
 impl DnsPacket {
-
     pub fn new() -> Self {
         Self {
             header: DnsHeader::new(),
@@ -407,7 +406,7 @@ impl DnsPacket {
         }
     }
 
-    pub fn from_buffer(dbuf : &mut DnsBytePacketBuffer) -> Result<Self> {
+    pub fn from_buffer(dbuf: &mut DnsBytePacketBuffer) -> Result<Self> {
         let mut packet: DnsPacket = Self::default();
         packet.header = DnsHeader::read(dbuf)?;
         packet.questions = DnsQuestion::read(dbuf, packet.header.qd_count as usize)?;

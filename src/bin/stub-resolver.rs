@@ -36,21 +36,22 @@ fn main() -> Result<()> {
     socket
         .send_to(
             &req_buffer
-            .get_buf_range(0..req_buffer.get_pos())
-            .expect("Unable to read given range of buffer"),
+                .get_buf_range(0..req_buffer.get_pos())
+                .expect("Unable to read given range of buffer"),
             server,
-            )
+        )
         .map_err(|err| {
             eprintln!("ERROR: error while standing data: {}", err);
         })?;
     let mut res_buffer = DnsBytePacketBuffer::new();
-    let (bytes_read, socket_addr) = socket
-        .recv_from(&mut res_buffer.get_buf())
-        .map_err(|err|{
+    let (bytes_read, socket_addr) = socket.recv_from(&mut res_buffer.get_buf()).map_err(|err| {
         eprintln!("ERROR: Unable to recieve data from socket:{}", err);
     })?;
     res_buffer.set_bytes_read(bytes_read);
-    println!("INFO: Bytes Read: {}, socket address: {}", bytes_read, socket_addr);
+    println!(
+        "INFO: Bytes Read: {}, socket address: {}",
+        bytes_read, socket_addr
+    );
 
     // As per the previous section, `DnsPacket::from_buffer()` is then used to
     // actually parse the packet after which we can print the response.
@@ -66,7 +67,7 @@ fn main() -> Result<()> {
     for rec in res_packet.authorities {
         println!("{:#?}", rec);
     }
-    for rec in res_packet.additionals{
+    for rec in res_packet.additionals {
         println!("{:#?}", rec);
     }
 
